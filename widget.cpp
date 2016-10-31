@@ -1,56 +1,47 @@
 #include "widget.h"
+#include "settingswidget.h"
 #include "weather.h"
-#include "settings.h"
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include <QPixmap>
-#include <QMouseEvent>
 #include <QMenu>
 #include <QApplication>
 #include <QMessageBox>
+#include "items.h"
+#include "settings.h"
 
-Widget::Widget(QWidget *parent) :   QWidget(parent),
-                                    mCityLabel(new QLabel),
-                                    mCommentLabel(new QLabel),
-                                    mTempLabel(new QLabel),
-                                    mIconLabel(new QLabel),
-                                    mMove(false),
-                                    mCityName("Odesa"),
+Widget::Widget(QWidget *parent) :   QLabel(parent),
+                                    mCity("Odesa"),
+                                    mTemp("0"),
+                                    mComment(""),
                                     mStyle("Dark"),
-                                    mMinutes(60),
                                     mPositionMouse(0,0),
-                                    mTimer(new QTimer)
+                                    mMove(false)
 {
-    readSettings();
-    setStyleWidget();
-
-    QVBoxLayout *pVBLayout = new QVBoxLayout;
-    pVBLayout->addWidget(mCityLabel);
-    pVBLayout->addWidget(mCommentLabel);
-    QFormLayout *pFLayout = new QFormLayout;
-    pFLayout->addRow(mTempLabel, mIconLabel);
-    pVBLayout->addLayout(pFLayout);
-
-    setLayout(pVBLayout);
-
-    connect(mTimer, SIGNAL(timeout()), SLOT(slotTimer()));
-    mTimer->start(minutesToMilliseconds());
-
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint | Qt::Tool);
-
-
     getWeather();
+    setStyleWidget();
+   // setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint | Qt::Tool);
+}
+
+void Widget::fillWidget()
+{
+    if(mComment.indexOf("Error") == -1)
+    {
+        setText("<H1>" + mCity +    "</H1>"
+            "<H2>" + mComment + "</H2>"
+            "<font size=7>" + mTemp +    "</font>" + "<img src=\"icon.png\">"
+            );
+    }
+    else
+        setText("<H2>" + mComment +    "</H2>");
+
+    adjustSize();
 }
 
 void Widget::getWeather()
 {
     Weather weather;
-    weather.connectWeather(mCityName.toStdString());
-    mCityLabel->setText(QString::fromStdString(weather.getCity()));
-    mCommentLabel->setText(QString::fromStdString(weather.getComment()));
-    mTempLabel->setText(QString::fromStdString(weather.getTemp()));
-    QPixmap pix("icon.png");
-    mIconLabel->setPixmap(pix);
+
+    mCity = QString::fromStdString(weather.getCity());
+    mComment = QString::fromStdString(weather.getComment());
+    mTemp = QString::fromStdString(weather.getTemp());
 }
 
 void Widget::mousePressEvent(QMouseEvent *event)
@@ -95,87 +86,30 @@ void Widget::slotTimer()
 
 void Widget::slotAbout()
 {
-    QMessageBox::about(0, "About", "Weather ver. 1.0\nAuthor Kylchitskyi Roman\ne-mail: roma1985@ukr.net");
+    QMessageBox::about(0, "About", "Weather ver. 2.0\nAuthor Kylchitskyi Roman\ne-mail: roma1985@ukr.net");
 }
 
 void Widget::slotSettings()
 {
-    Settings settingsDialog(mCityName, mStyle, mMinutes);
-    if(settingsDialog.exec() == QDialog::Accepted)
+    SettingsWidget *settingsDialog = new SettingsWidget;
+    if(settingsDialog->exec() == QDialog::Accepted)
     {
-        if(mCityName != settingsDialog.getCity())
-        {
-            mCityName = settingsDialog.getCity();
-            getWeather();
-        }
-        if(mStyle != settingsDialog.getStyle())
-        {
-            mStyle = settingsDialog.getStyle();
-            setStyleWidget();
-        }
-        if(mMinutes != settingsDialog.getMinutes())
-        {
-            mMinutes = settingsDialog.getMinutes();
-            mTimer->start(minutesToMilliseconds());
-        }
+        getWeather();
+        setStyleWidget();
     }
-}
-
-unsigned Widget::minutesToMilliseconds() const
-{
-    return mMinutes * 1000*60;
+    delete settingsDialog;
 }
 
 void Widget::setStyleWidget()
 {
-    if((mStyle == "Dark") || (mStyle == "Light"))
-    {
-        QFile file("./Style" + mStyle + ".css");
-        file.open(QFile::ReadOnly);
-        QString strCSS = QLatin1String(file.readAll());
-        setStyleSheet(strCSS);
-    }
-}
+    Settings &settings = Settings::getInstance();
+    Items items;
+    mStyle = settings.readSettings(items.style);
 
-void Widget::writeSettings()
-{
-    QPoint positionWidget = mapToGlobal(QPoint(0, 0));
-    mSettings.beginGroup("/Settings");
-        mSettings.setValue("/city", mCityName);
-        mSettings.setValue("/cityCountry", mCityLabel->text());
-        mSettings.setValue("/temp", mTempLabel->text());
-        mSettings.setValue("/comment", mCommentLabel->text());
-        mSettings.setValue("/position", positionWidget);
-        mSettings.setValue("/style", mStyle);
-        mSettings.setValue("/minutes", mMinutes);
-    mSettings.endGroup();
-}
+    QFile file("./Style/Style" + mStyle + ".css");
+    file.open(QFile::ReadOnly);
+    QString strCSS = QLatin1String(file.readAll());
+    setStyleSheet(strCSS);
 
-void Widget::readSettings()
-{
-    QString str;
-    mSettings.beginGroup("/Settings");
-        str = mSettings.value("/city", mCityName).toString();
-        mCityName = str;
-
-        str = mSettings.value("/cityCountry", "").toString();
-        mCityLabel->setText(str);
-
-        str = mSettings.value("/temp", "").toString();
-        mTempLabel->setText(str);
-
-        str = mSettings.value("/comment", "").toString();
-        mCommentLabel->setText(str);
-
-        QPoint positionWidget = mSettings.value("/position", mapToGlobal(QPoint(0, 0))).toPoint();
-        mStyle = mSettings.value("/style", mStyle).toString();
-        move(positionWidget);
-
-        mMinutes = mSettings.value("/minutes", 60).toUInt();
-    mSettings.endGroup();
-}
-
- Widget::~Widget()
-{
-    writeSettings();
+    fillWidget();
 }

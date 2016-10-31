@@ -1,45 +1,38 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
-#include <QWidget>
 #include <QLabel>
-#include <QPoint>
-#include <QSettings>
-#include <QTimer>
+#include <QMouseEvent>
+//#include "settings.h"
 
-class Widget : public QWidget
+class Widget : public QLabel
 {
     Q_OBJECT
 public:
     explicit Widget(QWidget *parent = 0);
-    ~Widget();
+   // ~Widget();
+
+private:
+    void fillWidget();
+    void getWeather();
+    void setStyleWidget();
+    virtual void mousePressEvent(QMouseEvent *);
+    virtual void mouseReleaseEvent(QMouseEvent *);
+    virtual void mouseMoveEvent(QMouseEvent *);
+
+    QString mCity;
+    QString mTemp;
+    QString mComment;
+    QString mStyle;
+    QPoint mPositionMouse;
+    bool mMove;
+    //Settings *mSettings;
 
 private slots:
     void slotSettings();
     void slotUpdate();
     void slotAbout();
     void slotTimer();
-private:
-    QLabel *mCityLabel;
-    QLabel *mTempLabel;
-    QLabel *mCommentLabel;
-    QLabel *mIconLabel;
-    QString mCityName;
-    QString mStyle;
-    QPoint mPositionMouse;
-    QSettings mSettings;
-    QTimer *mTimer;
-    unsigned mMinutes;
-    bool mMove;
-
-    void getWeather();
-    void setStyleWidget();
-    void writeSettings();
-    void readSettings();
-    unsigned minutesToMilliseconds() const;
-    virtual void mousePressEvent(QMouseEvent *);
-    virtual void mouseReleaseEvent(QMouseEvent *);
-    virtual void mouseMoveEvent(QMouseEvent *);
 };
 
 #endif // WIDGET_H

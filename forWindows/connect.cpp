@@ -1,22 +1,22 @@
 #include "connect.h"
-#include <unistd.h> // for close()
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <string.h>
 #include <fstream>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 using std::string;
 
 Connect::Connect(const string & host) :   mHost(host),
-                                         mSockfd(-1)
+    mSockfd(-1)
 {
 }
 
 bool Connect::isConectServer()
 {
-    bool isConnected = false;
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0)
+        return false;
+
     struct addrinfo *servinfo;
     struct addrinfo hints;
     memset(&hints, 0, sizeof hints);
@@ -25,19 +25,20 @@ bool Connect::isConectServer()
     hints.ai_protocol = 0;
 
     int status = getaddrinfo(mHost.c_str(), "http", &hints, &servinfo);
+    if(status != 0)
+        return false;
 
-    if(status == 0)
+    mSockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+    if(mSockfd == -1)
+        return false;
+
+    if(connect(mSockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
     {
-        mSockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
-        if(mSockfd != -1)
-        {
-            if(connect(mSockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
-                close(mSockfd);
-            else
-                isConnected = true;
-        }
+        closesocket(mSockfd);
+        return false;
     }
-    return isConnected;
+    else
+       return true;
 }
 
 std::string Connect::getMessage(const std::string & messageToServer)
@@ -47,13 +48,12 @@ std::string Connect::getMessage(const std::string & messageToServer)
     {
         int len = messageToServer.length();
         int bytes_sent = send(mSockfd, messageToServer.c_str(), len, 0);
-        const int SIZEBUF = 2048;
-        char buf[SIZEBUF];
+        char buf[1000];
 
-        if((bytes_sent = recv(mSockfd, buf, SIZEBUF-1, 0)) != -1)
+        if((bytes_sent = recv(mSockfd, buf, 999, 0)) != -1)
             returtnMessage.assign(buf, bytes_sent);
 
-        close(mSockfd);
+        closesocket(mSockfd);
     }
     return returtnMessage;
 }
@@ -66,6 +66,7 @@ void Connect::saveFile(const std::string & fileName, const std::string &messageT
     {
         const int SIZEBUF = 4096;
         char buf[SIZEBUF];
+        bool headerIsGone = false;
         int len = 0;
         std::ofstream file(fileName, std::ios::binary);
 
@@ -73,9 +74,20 @@ void Connect::saveFile(const std::string & fileName, const std::string &messageT
 
         while((len = recv(mSockfd, buf, SIZEBUF-1, 0)) > 0)
         {
-            file.write(buf, len);
+            if (headerIsGone) {
+                file.write(buf, len);
+            } else {
+                char* ptr;
+                buf[len] = '\0';
+                ptr = strstr(buf, "\r\n\r\n");
+                if (ptr != NULL) {
+                    ptr += 4;
+                    file.write(ptr, len - (ptr - buf));
+                    headerIsGone = true;
+                }
+            }
         }
         file.close();
-        close(mSockfd);
+        closesocket(mSockfd);
     }
 }

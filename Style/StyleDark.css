@@ -1,0 +1,13 @@
+QWidget, QDialog
+{
+	background-color: rgba(63, 63, 63, 88);
+}
+
+QLabel {
+	font-size: 15px;
+	color:white;
+}
+
+QMenu {
+	color:white;
+}

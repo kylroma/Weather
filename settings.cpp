@@ -1,68 +1,54 @@
 #include "settings.h"
-#include <QLabel>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include <QTabWidget>
+#include <QSettings>
 
-Settings::Settings(QString city, QString style, unsigned minutes,  QWidget *parent) : QDialog(parent,
-                                                                                         Qt::WindowTitleHint |
-                                                                                         Qt::WindowSystemMenuHint),
-                                                                                  mCityLine(new QLineEdit(city)),
-                                                                                  mStyle(new QComboBox),
-                                                                                  mMinutes(new QSpinBox)
-
+Settings & Settings::getInstance()
 {
-    //first page
-    QLabel *minutesLabel = new QLabel("minutes");
-    QLabel *updateLabel = new QLabel("&Update every");
-    mMinutes->setValue(minutes);
-    updateLabel->setBuddy(mMinutes);
-    //second page
-    mStyle->addItem("Light");
-    mStyle->addItem("Dark");
-    mStyle->setCurrentText(style);
-    //##################
-    QPushButton *ok = new QPushButton("&Ok");
-    QPushButton *cancel = new QPushButton("&Cancel");
-
-    connect(ok, SIGNAL(clicked(bool)), SLOT(accept()));
-    connect(cancel, SIGNAL(clicked(bool)), SLOT(reject()));
-
-    QGridLayout *pWeatherLayout = new QGridLayout;
-    pWeatherLayout->addWidget(mCityLine, 0, 0, 1, 3);
-    pWeatherLayout->addWidget(updateLabel, 1, 0);
-    pWeatherLayout->addWidget(mMinutes, 1, 1);
-    pWeatherLayout->addWidget(minutesLabel, 1, 2);
-    QWidget *wgtWeather = new QWidget;
-    wgtWeather->setLayout(pWeatherLayout);
-
-    QVBoxLayout *pStyleLayout = new QVBoxLayout;
-    pStyleLayout->addWidget(mStyle);
-    QWidget *wgtStyle = new QWidget;
-    wgtStyle->setLayout(pStyleLayout);
-
-    QTabWidget *tab = new QTabWidget;
-    tab->addTab(wgtWeather, "&Weather");
-    tab->addTab(wgtStyle, "&Style");
-
-    QFormLayout *pfLayout = new QFormLayout;
-    pfLayout->addRow(tab);
-    pfLayout->addRow(ok, cancel);
-    setLayout(pfLayout);
+    static Settings instance;
+    return instance;
 }
 
-QString Settings::getCity() const
+Settings::Settings()
 {
-    return mCityLine->text();
+    readSettingsFromFile();
 }
 
-QString Settings::getStyle() const
+Settings::~Settings()
 {
-    return mStyle->currentText();
+    writeSettingsToFile();
 }
 
-unsigned Settings::getMinutes() const
+void Settings::writeSettings(const QString &nameParameter, const QString &parameter)
 {
-    return mMinutes->value();
+    if(!nameParameter.isEmpty())
+        mData[nameParameter] = parameter;
+}
+
+QString Settings::readSettings(const QString &nameParemeter)
+{
+    if(mData.find(nameParemeter) != mData.end())
+        return mData[nameParemeter];
+    return "";
+}
+
+void Settings::writeSettingsToFile()
+{
+    QSettings settings("settings.ini", QSettings::IniFormat);
+    settings.beginGroup("/Settings");
+        for(auto it: mData)
+            settings.setValue(it.first, it.second);
+    settings.endGroup();
+}
+
+void Settings::readSettingsFromFile()
+{
+    QSettings settings("settings.ini", QSettings::IniFormat);
+    settings.beginGroup("/Settings");
+            QStringList keys = settings.allKeys();
+            QStringList::Iterator it = keys.begin();
+            while (it != keys.end())
+            {
+                mData[*it] = settings.value(*it).toString();
+                ++it;
+            }
+    settings.endGroup();
 }

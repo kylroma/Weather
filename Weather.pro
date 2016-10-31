@@ -2,14 +2,14 @@ QT += widgets gui
 
 CONFIG += c++11
 
-LIBS += -lws2_32
-
 HEADERS += \
     widget.h \
     connect.h \
     weather.h \
     settings.h \
-    connecttoserverweather.h
+    settingswidget.h \
+    items.h \
+    citytoip.h
 
 SOURCES += \
     widget.cpp \
@@ -17,4 +17,8 @@ SOURCES += \
     connect.cpp \
     weather.cpp \
     settings.cpp \
-    connecttoserverweather.cpp
+    settingswidget.cpp \
+    citytoip.cpp
+
+FORMS += \
+    settingswidget.ui

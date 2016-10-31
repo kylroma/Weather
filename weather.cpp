@@ -1,30 +1,46 @@
 #include "weather.h"
-#include "connecttoserverweather.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <map>
+#include "citytoip.h"
+#include "settings.h"
+#include "items.h"
 
 using std::string;
 
-Weather::Weather()
+Weather::Weather() : mConnect("api.openweathermap.org")
 {
+    Settings &settings = Settings::getInstance();
+    Items items;
+    string city;
 
+    if(settings.readSettings(items.cityToIP) == "true")
+    {
+        CityToIp toIp;
+        city = toIp.getCity().toStdString();
+    }
+    else
+        city = settings.readSettings(items.city).toStdString();
+
+    connectWeather(city);
 }
 
 void Weather::connectWeather(const string &city)
 {
-    ConnectToServerWeather connectServer;
-    string weather = connectServer.getWeather(city);
-    if(!weather.empty())
+    string message =    "GET /data/2.5/weather/?q=" + city +
+                    "&units=metric&APPID=f35aabad9d11c1c2f787fad11e074b89\r\n"\
+                    "Host: api.openweathermap.org\r\n\r\n";
+    string weatherJson = mConnect.getMessage(message);
+
+    if(!weatherJson.empty())
     {
-        mJsonParser(weather);
-        connectServer.saveIconFile(mIconName);
+        mJsonParser(weatherJson);
+        saveIconFile();
     }
     else
         mComment = "Error: connect";
 }
-
 
 void Weather::mJsonParser(const string &json)
 {
@@ -48,6 +64,14 @@ void Weather::mJsonParser(const string &json)
             }
         }
     }
+}
+
+void Weather::saveIconFile()
+{
+    string messageToServer = "GET /img/w/" + mIconName + "\r\n"\
+                     "Host: api.openweathermap.org\r\n\r\n";
+    string fileName = "icon.png";
+    mConnect.saveFile(fileName, messageToServer);
 }
 
 string Weather::getTemp()

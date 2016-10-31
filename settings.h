@@ -1,25 +1,27 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
+#include <map>
+#include <QString>
 
-#include <QDialog>
-#include <QLineEdit>
-#include <QComboBox>
-#include <QSpinBox>
-
-class Settings : public QDialog
+class Settings
 {
-    Q_OBJECT
-
 public:
-    explicit Settings(QString city, QString style, unsigned minutes, QWidget *parent = 0);
-
-    QString getCity() const;
-    QString getStyle() const;
-    unsigned getMinutes() const;
+    static Settings & getInstance();
+    void writeSettings(const QString & nameParameter, const QString & parameter);
+    QString readSettings(const QString & nameParemeter);
 private:
-    QLineEdit *mCityLine;
-    QComboBox *mStyle;
-    QSpinBox *mMinutes;
+    Settings();
+    Settings(const Settings &);
+    Settings & operator=(Settings &);
+    ~Settings();
+
+    void writeSettingsToFile();
+    void readSettingsFromFile();
+
+    std::map<QString, QString> mData;
 };
 
+
 #endif // SETTINGS_H
+
+
