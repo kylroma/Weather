@@ -1,6 +1,5 @@
 #include "connect.h"
 #include <fstream>
-#include <winsock2.h>
 #include <ws2tcpip.h>
 
 using std::string;
@@ -12,8 +11,7 @@ Connect::Connect(const string & host) :   mHost(host),
 
 bool Connect::isConectServer()
 {
-    WSADATA wsaData;
-    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    int result = WSAStartup(MAKEWORD(2, 2), &mWsaData);
     if (result != 0)
         return false;
 
@@ -26,15 +24,22 @@ bool Connect::isConectServer()
 
     int status = getaddrinfo(mHost.c_str(), "http", &hints, &servinfo);
     if(status != 0)
+    {
+        WSACleanup();
         return false;
+    }
 
     mSockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
     if(mSockfd == -1)
+    {
+        WSACleanup();
         return false;
+    }
 
     if(connect(mSockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
     {
         closesocket(mSockfd);
+        WSACleanup();
         return false;
     }
     else
@@ -54,6 +59,7 @@ std::string Connect::getMessage(const std::string & messageToServer)
             returtnMessage.assign(buf, bytes_sent);
 
         closesocket(mSockfd);
+        WSACleanup();
     }
     return returtnMessage;
 }
@@ -89,5 +95,6 @@ void Connect::saveFile(const std::string & fileName, const std::string &messageT
         }
         file.close();
         closesocket(mSockfd);
+        WSACleanup();
     }
 }
