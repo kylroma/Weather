@@ -1,6 +1,7 @@
 #ifndef CONNECT_H
 #define CONNECT_H
 #include <string>
+#include <winsock2.h>
 
 using std::string;
 
@@ -14,6 +15,7 @@ public:
 private:
     int mSockfd;
     string mHost;
+    WSADATA mWsaData;
     bool isConectServer();
 };
 
