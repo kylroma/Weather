@@ -2,6 +2,9 @@ QT += widgets gui
 
 CONFIG += c++11
 
+#for windows
+#LIBS += -lwsock32 -lWs2_32
+
 HEADERS += \
     widget.h \
     connect.h \
