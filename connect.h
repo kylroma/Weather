@@ -14,7 +14,10 @@ public:
 private:
     int mSockfd;
     string mHost;
+    struct addrinfo *mServinfo;
+
     bool isConectServer();
+    void closeConnect();
 };
 
 #endif // CONNECT_H

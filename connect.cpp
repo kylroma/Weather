@@ -9,40 +9,44 @@
 
 using std::string;
 
-Connect::Connect(const string & host) :   mHost(host),
-                                         mSockfd(-1)
+Connect::Connect(const string & host) :  mHost(host),
+                                         mSockfd(-1),
+                                         mServinfo(nullptr)
 {
 }
 
 bool Connect::isConectServer()
 {
-    bool isConnected = false;
-    struct addrinfo *servinfo;
     struct addrinfo hints;
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = 0;
 
-    int status = getaddrinfo(mHost.c_str(), "http", &hints, &servinfo);
+    int status = getaddrinfo(mHost.c_str(), "http", &hints, &mServinfo);
+    if(status != 0)
+        return false;
 
-    if(status == 0)
+    mSockfd = socket(mServinfo->ai_family, mServinfo->ai_socktype, mServinfo->ai_protocol);
+    if(mSockfd == -1)
     {
-        mSockfd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
-        if(mSockfd != -1)
-        {
-            if(connect(mSockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
-                close(mSockfd);
-            else
-                isConnected = true;
-        }
+        freeaddrinfo(mServinfo);
+        return false;
     }
-    return isConnected;
+
+    status = connect(mSockfd, mServinfo->ai_addr, mServinfo->ai_addrlen);
+    if(status == -1)
+    {
+        closeConnect();
+        return false;
+    }
+
+return true;
 }
 
 std::string Connect::getMessage(const std::string & messageToServer)
 {
-    string returtnMessage;
+    string returnMessage;
     if(isConectServer())
     {
         int len = messageToServer.length();
@@ -51,11 +55,11 @@ std::string Connect::getMessage(const std::string & messageToServer)
         char buf[SIZEBUF];
 
         if((bytes_sent = recv(mSockfd, buf, SIZEBUF-1, 0)) != -1)
-            returtnMessage.assign(buf, bytes_sent);
+            returnMessage.assign(buf, bytes_sent);
 
-        close(mSockfd);
+        closeConnect();
     }
-    return returtnMessage;
+    return returnMessage;
 }
 
 
@@ -76,6 +80,12 @@ void Connect::saveFile(const std::string & fileName, const std::string &messageT
             file.write(buf, len);
         }
         file.close();
-        close(mSockfd);
+        closeConnect();
     }
+}
+
+void Connect::closeConnect()
+{
+    close(mSockfd);
+    freeaddrinfo(mServinfo);
 }
