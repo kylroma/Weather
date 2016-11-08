@@ -20,8 +20,7 @@ QString CityToIp::getCity()
 
 void CityToIp::getLocationJson()
 {
-    QString message =    "GET / \r\n"\
-            "Host: api.sypexgeo.net\r\n\r\n";
+    QString message =    "GET / \n";
     mJson = QString::fromStdString(mConnect.getMessage(message.toStdString()));
 }
 
