@@ -17,7 +17,7 @@ Widget::Widget(QWidget *parent) :   QLabel(parent),
 {
     getWeather();
     setStyleWidget();
-   // setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint | Qt::Tool);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint | Qt::Tool);
 }
 
 void Widget::fillWidget()
@@ -86,7 +86,9 @@ void Widget::slotTimer()
 
 void Widget::slotAbout()
 {
-    QMessageBox::about(0, "About", "Weather ver. 2.1\nAuthor Kylchitskyi Roman\ne-mail: roma1985@ukr.net");
+    QMessageBox::about(0, "About", "Weather ver. 2.2\n"
+                                   "Author Kylchitskyi Roman\n"
+                                   "e-mail: roma1985@ukr.net");
 }
 
 void Widget::slotSettings()

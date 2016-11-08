@@ -3,14 +3,12 @@
 
 #include <QLabel>
 #include <QMouseEvent>
-//#include "settings.h"
 
 class Widget : public QLabel
 {
     Q_OBJECT
 public:
     explicit Widget(QWidget *parent = 0);
-   // ~Widget();
 
 private:
     void fillWidget();
@@ -26,7 +24,6 @@ private:
     QString mStyle;
     QPoint mPositionMouse;
     bool mMove;
-    //Settings *mSettings;
 
 private slots:
     void slotSettings();
