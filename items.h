@@ -10,5 +10,6 @@ struct Items
     const QString cityToIP = "cityToIP";
 };
 
+
 #endif // ITEMS
 
