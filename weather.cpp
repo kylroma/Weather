@@ -21,7 +21,12 @@ Weather::Weather() : mConnect("api.openweathermap.org")
         city = toIp.getCity().toStdString();
     }
     else
+    {
         city = settings.readSettings(items.city).toStdString();
+
+        if(city.empty())
+            city = "Odesa";
+    }
 
     connectWeather(city);
 }
@@ -73,17 +78,17 @@ void Weather::saveIconFile()
     mConnect.saveFile(fileName, messageToServer);
 }
 
-string Weather::getTemp()
+string Weather::getTemp() const
 {
     return mTemp;
 }
 
-string Weather::getComment()
+string Weather::getComment() const
 {
     return mComment;
 }
 
-string Weather::getCity()
+string Weather::getCity() const
 {
     return mCity;
 }

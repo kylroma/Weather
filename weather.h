@@ -10,9 +10,9 @@ class Weather
 public:
     Weather();
 
-    string getTemp();
-    string getComment();
-    string getCity();
+    string getTemp() const;
+    string getComment() const;
+    string getCity() const;
 private:
     void connectWeather(const string &city);
     string mTemp;

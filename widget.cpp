@@ -5,7 +5,6 @@
 #include <QApplication>
 #include <QMessageBox>
 #include "items.h"
-#include "settings.h"
 
 Widget::Widget(QWidget *parent) :   QLabel(parent),
                                     mCity("Odesa"),
@@ -13,10 +12,16 @@ Widget::Widget(QWidget *parent) :   QLabel(parent),
                                     mComment(""),
                                     mStyle("Dark"),
                                     mPositionMouse(0,0),
-                                    mMove(false)
+                                    mTimer(new QTimer),
+                                    mMove(false),
+                                    mSettings(&Settings::getInstance())
 {
     getWeather();
     setStyleWidget();
+
+    mTimer->start(startTimer());
+    connect(mTimer, SIGNAL(timeout()), SLOT(slotTimer()));
+
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint | Qt::Tool);
 }
 
@@ -24,13 +29,13 @@ void Widget::fillWidget()
 {
     if(mComment.indexOf("Error") == -1)
     {
-        setText("<H1>" + mCity +    "</H1>"
-            "<H2>" + mComment + "</H2>"
-            "<font size=7>" + mTemp +    "</font>" + "<img src=\"icon.png\">"
-            );
+            setText("<H1>" + mCity +    "</H1>"
+                    "<H2>" + mComment + "</H2>"
+                    "<font size=7>" + mTemp + "</font>" + "<img src=\"icon.png\">"
+                    );
     }
     else
-        setText("<H2>" + mComment +    "</H2>");
+        setText("<H2>" + mComment + "</H2>");
 
     adjustSize();
 }
@@ -42,6 +47,8 @@ void Widget::getWeather()
     mCity = QString::fromStdString(weather.getCity());
     mComment = QString::fromStdString(weather.getComment());
     mTemp = QString::fromStdString(weather.getTemp());
+
+    fillWidget();
 }
 
 void Widget::mousePressEvent(QMouseEvent *event)
@@ -84,9 +91,9 @@ void Widget::slotTimer()
     getWeather();
 }
 
-void Widget::slotAbout()
+void Widget::slotAbout() const
 {
-    QMessageBox::about(0, "About", "Weather ver. 2.2\n"
+    QMessageBox::about(0, "About", "Weather ver. 2.3\n"
                                    "Author Kylchitskyi Roman\n"
                                    "e-mail: roma1985@ukr.net");
 }
@@ -97,16 +104,21 @@ void Widget::slotSettings()
     if(settingsDialog->exec() == QDialog::Accepted)
     {
         getWeather();
-        setStyleWidget();
+        mTimer->start(startTimer());
+
+        Items items;
+        if(mStyle != mSettings->readSettings(items.style))
+            setStyleWidget();
     }
     delete settingsDialog;
 }
 
 void Widget::setStyleWidget()
 {
-    Settings &settings = Settings::getInstance();
     Items items;
-    mStyle = settings.readSettings(items.style);
+    QString style = mSettings->readSettings(items.style);
+    if(!style.isEmpty())
+        mStyle = style;
 
     QFile file("./Style/Style" + mStyle + ".css");
     file.open(QFile::ReadOnly);
@@ -114,4 +126,16 @@ void Widget::setStyleWidget()
     setStyleSheet(strCSS);
 
     fillWidget();
+}
+
+unsigned Widget::startTimer() const
+{
+    unsigned minutes = 30;
+    Items items;
+    QString minutesStr = mSettings->readSettings(items.minutes);
+
+    if(!minutesStr.isEmpty() && minutesStr.toUInt() != 0)
+        minutes = minutesStr.toUInt();
+
+    return minutes * 1000 * 60;
 }

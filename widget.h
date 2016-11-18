@@ -3,6 +3,8 @@
 
 #include <QLabel>
 #include <QMouseEvent>
+#include <QTimer>
+#include "settings.h"
 
 class Widget : public QLabel
 {
@@ -17,18 +19,21 @@ private:
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
+    unsigned startTimer() const;
 
     QString mCity;
     QString mTemp;
     QString mComment;
     QString mStyle;
     QPoint mPositionMouse;
+    QTimer *mTimer;
     bool mMove;
+    Settings *mSettings;
 
 private slots:
     void slotSettings();
     void slotUpdate();
-    void slotAbout();
+    void slotAbout() const;
     void slotTimer();
 };
 

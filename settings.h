@@ -15,7 +15,7 @@ private:
     Settings & operator=(Settings &);
     ~Settings();
 
-    void writeSettingsToFile();
+    void writeSettingsToFile() const;
     void readSettingsFromFile();
 
     std::map<QString, QString> mData;

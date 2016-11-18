@@ -84,7 +84,7 @@ void Connect::saveFile(const std::string & fileName, const std::string &messageT
     }
 }
 
-void Connect::closeConnect()
+void Connect::closeConnect() const
 {
     close(mSockfd);
     freeaddrinfo(mServinfo);

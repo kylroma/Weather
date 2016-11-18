@@ -17,7 +17,7 @@ private:
     struct addrinfo *mServinfo;
 
     bool isConectServer();
-    void closeConnect();
+    void closeConnect() const;
 };
 
 #endif // CONNECT_H

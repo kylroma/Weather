@@ -30,7 +30,7 @@ QString Settings::readSettings(const QString &nameParemeter)
     return "";
 }
 
-void Settings::writeSettingsToFile()
+void Settings::writeSettingsToFile() const
 {
     QSettings settings("settings.ini", QSettings::IniFormat);
     settings.beginGroup("/Settings");
